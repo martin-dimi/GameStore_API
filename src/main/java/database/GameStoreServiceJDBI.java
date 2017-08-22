@@ -24,7 +24,8 @@ public class GameStoreServiceJDBI implements GameStoreService{
     private final String user = "admin";
     private final String pass = "admin";
 
-    private GameStoreDAO dao;
+    private GameDAO gameDAO;
+    private RecordDAO recordDAO;
     private Handle handle;
     private SparkSession spark;
     private Properties properties;
@@ -32,7 +33,8 @@ public class GameStoreServiceJDBI implements GameStoreService{
     private void connect(){
         DBI dbi = new DBI(url, user, pass);
         handle = dbi.open();
-        dao = handle.attach(GameStoreDAO.class);
+        gameDAO = handle.attach(GameDAO.class);
+        recordDAO = handle.attach(RecordDAO.class);
     }
 
     private void connectSpark(){
@@ -50,7 +52,7 @@ public class GameStoreServiceJDBI implements GameStoreService{
     public List<Game> getGames() {
         connect();
 
-        List<Game> games = dao.getGames();
+        List<Game> games = gameDAO.getGames();
         handle.close();
 
         return games;
@@ -60,7 +62,7 @@ public class GameStoreServiceJDBI implements GameStoreService{
     public List<Record> getRecords() {
         connect();
 
-        List<Record> records = dao.getRecords();
+        List<Record> records = recordDAO.getRecords();
         handle.close();
 
         return records;
@@ -70,7 +72,7 @@ public class GameStoreServiceJDBI implements GameStoreService{
     public Game getGame(int id) {
         connect();
 
-        Game game = dao.getGame(id);
+        Game game = gameDAO.getGame(id);
         handle.close();
 
         return game;
@@ -80,7 +82,7 @@ public class GameStoreServiceJDBI implements GameStoreService{
     public Record getRecord(int id) {
         connect();
 
-        Record record = dao.getRecord(id);
+        Record record = recordDAO.getRecord(id);
         handle.close();
 
         return record;
@@ -89,28 +91,28 @@ public class GameStoreServiceJDBI implements GameStoreService{
     @Override
     public void insertGame(Game game) {
         connect();
-        dao.insertGame(game);
+        gameDAO.insertGame(game);
         handle.close();
     }
 
     @Override
     public void insertRecord(Record record) {
         connect();
-        dao.insertRecord(record);
+        recordDAO.insertRecord(record);
         handle.close();
     }
 
     @Override
     public void deleteGame(int id) {
         connect();
-        dao.deleteGame(id);
+        gameDAO.deleteGame(id);
         handle.close();
     }
 
     @Override
     public void deleteRecord(int id) {
         connect();
-        dao.deleteRecord(id);
+        recordDAO.deleteRecord(id);
         handle.close();
     }
 
@@ -144,7 +146,7 @@ public class GameStoreServiceJDBI implements GameStoreService{
                     .replaceAll("_1", "numberOfSales")
                     .replaceAll("_2", "revenue");
         }catch (Exception e){
-
+            e.printStackTrace();
         }
 
         return salesJSON;
@@ -156,8 +158,8 @@ public class GameStoreServiceJDBI implements GameStoreService{
         handle.begin();
 
         int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-        dao.reduceGameStock(id);
-        dao.insertRecord(new Record(id, currentYear, price));
+        gameDAO.reduceGameStock(id);
+        recordDAO.insertRecord(new Record(id, currentYear, price));
 
         handle.commit();
         handle.close();
