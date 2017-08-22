@@ -1,0 +1,7 @@
+
+spark-warehouse/
+src/main/resources/
+target/classes/database/GameDAO.class
+target/classes/database/RecordDAO.class
+target/generated-sources/
+target/generated-test-sources/
