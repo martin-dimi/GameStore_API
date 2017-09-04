@@ -30,6 +30,8 @@ public class GameStoreServiceJDBI implements GameStoreService{
     private SparkSession spark;
     private Properties properties;
 
+    //connects the JDBI to the mySQL database and opens
+    //a handle so we can do transactions
     private void connect(){
         DBI dbi = new DBI(url, user, pass);
         handle = dbi.open();
@@ -37,6 +39,8 @@ public class GameStoreServiceJDBI implements GameStoreService{
         recordDAO = handle.attach(RecordDAO.class);
     }
 
+    //Sets up the spark connection and readies
+    //the properties so we can connect to the mySQL database
     private void connectSpark(){
         properties = new Properties();
         properties.setProperty("user", user);
@@ -120,11 +124,15 @@ public class GameStoreServiceJDBI implements GameStoreService{
     public String getSales(int from, int to) {
         connectSpark();
 
+        //reads it using the jdbc driver and saves it as a Record
         Dataset<Record> recordsSet = spark.read()
                 .jdbc(url, "records", properties)
                 .as(Encoders.bean(Record.class))
                 .filter(col("saleDate").between(from, to));
 
+        //reads it using the jdbc driver, selects only 2 columns,
+        //transform the dataset to a JavaRDD and to JavaRDDPair and finally
+        //to a map
         Map<Integer, String> gameIdPair= spark.read()
                 .jdbc(url, "games", properties)
                 .select("id", "name")
